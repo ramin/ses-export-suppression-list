@@ -2,6 +2,7 @@ import { SESv2Client, ListSuppressedDestinationsCommand } from "@aws-sdk/client-
 import * as  fs  from 'fs';
 
 const pageSize = process.env.PAGE_SIZE || 1000;
+const outputFile = "results.csv"
 
 // Set up AWS SDK clients with credentials and region
 const client = new SESv2Client({
@@ -10,22 +11,27 @@ const client = new SESv2Client({
 
 const getSuppressedEmailAddresses = async () => {
     try {
-
       let suppressedEmailAddresses = [];
       let params = {
         PageSize: pageSize,
       };
+
       do {
         console.log("fetching page")
+        console.log("total suppressed email addresses:", suppressedEmailAddresses.length)
 
         const data = await client.send(new ListSuppressedDestinationsCommand(params));
 
         if (data.SuppressedDestinationSummaries) {
-          data.SuppressedDestinationSummaries.map((summary) => ({
+          const results = data.SuppressedDestinationSummaries.map((summary) => ({
             Email: summary.EmailAddress,
             Reason: summary.Reason,
             LastUpdateTime: summary.LastUpdateTime,
-          }));
+          }))
+
+          suppressedEmailAddresses.push(
+            ...results
+          );
         }
         if(data.NextToken) {
           params.NextToken = data.NextToken;
@@ -36,6 +42,9 @@ const getSuppressedEmailAddresses = async () => {
         }
 
       } while (params.NextToken);
+
+      console.log("all pages fetched!");
+      console.log("found " + suppressedEmailAddresses.length + " suppressed email addresses");
 
       return suppressedEmailAddresses;
     } catch (error) {
@@ -49,7 +58,7 @@ getSuppressedEmailAddresses()
   .then((suppressedEmailAddresses) => {
     console.log("finished fetching Email Addresses:", suppressedEmailAddresses.length);
     const csvData = convertArrayToCSV(suppressedEmailAddresses);
-    writeToFile('suppressedEmailAddresses.csv', csvData);
+    writeToFile(outputFile, csvData);
   })
   .catch((error) => {
     console.error("Error:", error);
