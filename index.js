@@ -7,7 +7,6 @@ const client = new SESv2Client({
 });
 
 const getSuppressedEmailAddresses = async () => {
-
     try {
 
       let suppressedEmailAddresses = [];
@@ -30,6 +29,8 @@ const getSuppressedEmailAddresses = async () => {
           params.NextToken = data.NextToken;
           console.log("next token exists, sleeping")
           await sleep(1500);
+        } else {
+          params.NextToken = undefined
         }
 
       } while (params.NextToken);
