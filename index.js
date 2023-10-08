@@ -1,6 +1,8 @@
 import { SESv2Client, ListSuppressedDestinationsCommand } from "@aws-sdk/client-sesv2";
 import * as  fs  from 'fs';
 
+const pageSize = process.env.PAGE_SIZE || 1000;
+
 // Set up AWS SDK clients with credentials and region
 const client = new SESv2Client({
   region: process.env.AWS_REGION || "us-east-1",
@@ -11,7 +13,7 @@ const getSuppressedEmailAddresses = async () => {
 
       let suppressedEmailAddresses = [];
       let params = {
-        PageSize: 100, // Optional: Adjust as needed
+        PageSize: pageSize,
       };
       do {
         console.log("fetching page")
